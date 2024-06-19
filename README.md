@@ -14,11 +14,14 @@ Original code at ftp://ftp.iecc.com/pub/file/flexbison.zip.
   - User Code Section
 - `flex` is not matching my patterns in the same order that I defined them.
   - `flex` picks the rule that matches the most text (i.e. the longest possible input string).
+- `flex` breaks a tie by preferring longer matches, and if two patterns match the same thing, it prefers the pattern that appears first in the flex program. This is an utter hack, but a very useful one we'll see frequently.
+- Each pattern in the Rules Section must start at the beginning of the line, since flex considers any line that starts with whitespace to be code to be copied into the generated C program.
+- In the declaration section, code inside of %{ and %} is copied through verbatim near the beginning of the generated C source file.
 - yyin
 - yyout
-- yylex()
+- yylex() → The name that flex gives to the scanner routine.
 - yyparse()
-- yytext
+- yytext → In any `flex` action, the variable yytext is set to point to the input text that the pattern just matched.
 - yyleng → lenght of current token
 - yywrap() [called when reached EOF, returns non-zero to indicate that no further files need process processing; obsolete] → use: %option noyywrap
 - void yyrestart(FILE *new_file) → may be called to point yyin at a new input file
