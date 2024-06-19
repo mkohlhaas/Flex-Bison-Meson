@@ -7,6 +7,7 @@ int lines = 0;
 %}
 
 %%
+
 [^ \t\n\r\f\v]+ { words++; chars += strlen(yytext); }
 \n		          { chars++; lines++; }
 .		            { chars++; }

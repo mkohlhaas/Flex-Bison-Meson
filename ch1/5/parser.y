@@ -1,16 +1,15 @@
 // simplest version of calculator
 
 %{
+
 #include <stdio.h>
 
 int yylex(void);
 void yyerror(char* s);
+
 %}
 
-%token NUMBER
-%token ADD SUB MUL DIV ABS
-%token OP CP
-%token EOL
+%token NUMBER ADD SUB MUL DIV ABS OP CP EOL
 
 %%
 
@@ -19,7 +18,7 @@ calclist: /* nothing */
  | calclist EOL     { printf("> "); } /* blank line or a comment */
  ;
 
-exp: factor
+exp: factor // default $$ = $1
  | exp ADD exp    { $$ = $1 + $3; }
  | exp SUB factor { $$ = $1 - $3; }
  | exp ABS factor { $$ = $1 | $3; }

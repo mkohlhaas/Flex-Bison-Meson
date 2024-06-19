@@ -1,9 +1,15 @@
 /* Recognize tokens for the calculator and print them out. */
 
 %{
-#include "parser.h"
 
-void yyerror (char *, char);
+#include "parser.h"
+#include <stdio.h>
+
+char buffer[100];
+int max_len = sizeof buffer;
+
+void yyerror (char *);
+
 %}
 
 %%
@@ -20,6 +26,6 @@ void yyerror (char *, char);
 \n      { return EOL; }
 "//".*  /* ignore comments */
 [ \t]   { /* ignore white space */ }
-.	      { yyerror("Mystery character %c\n", *yytext); }
+.	      { snprintf(buffer, max_len, "Mystery character '%s'\n", yytext); yyerror(buffer); }
 
 %%
