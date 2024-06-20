@@ -21,6 +21,7 @@ lexer_c = custom_target(
 ### Bison ######################################################################
 
 bison_prog = find_program('bison')
+bison_lib = cc.find_library('y', required: true)
 
 parser_input = 'parser.y'
 parser_h = 'parser.h'
@@ -34,4 +35,9 @@ scanner_c = custom_target(
 
 ### Binary #####################################################################
 
-executable('calc', [lexer_c, scanner_c], dependencies: flex_lib, install: false)
+executable(
+  'calc',
+  [lexer_c, scanner_c],
+  dependencies: [flex_lib, bison_lib],
+  install: false,
+)

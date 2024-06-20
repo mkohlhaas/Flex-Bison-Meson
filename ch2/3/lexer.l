@@ -1,4 +1,5 @@
 /* skeleton for include files */
+/* See p.28 in flex.pdf (official documentation) */
 
 %option noyywrap warn nodefault
 %x IFILE
@@ -7,28 +8,26 @@
 
  typedef struct bufstack {
    struct bufstack *prev;
-   YY_BUFFER_STATE bs;
-   int lineno;
-   char *filename;
-   FILE *file;
+   YY_BUFFER_STATE buf_state;
+   int             lineno;
+   char            *filename;
+   FILE            *file;
  } bufstack;
 
- bufstack *curBS = NULL;  /* current buffer stack */
+ bufstack *current_bufstack = NULL;  /* current buffer stack */
 
- char *curFilename;       /* name of current input file */
-
- int newfile(char *filename);
- int popfile(void);
+ int push(char *filename);
+ int pop(void);
 
 %%
 
 ^"#"[ \t]*include[ \t]*[\"<] { BEGIN IFILE; }
-^.                           { fprintf(yyout, "%5d %s", yylineno,   yytext); } /* print line number and first character of line */
-^\n                          { fprintf(yyout, "%5d %s", yylineno++, yytext); } /* print empty lines (yytext → newline) */
-.                            { ECHO; }                                         /* print current character ("." → anything but newline) */
-\n                           { ECHO; yylineno++; }                             /* print newline */
+^.                           { fprintf(yyout, "%d %s", yylineno,   yytext); }  // replaces first char with line number and first char
+^\n                          { fprintf(yyout, "%d %s", yylineno++, yytext); }  // yytext = newline 
+.                            { ECHO; }                                         // print current character ("." = anything but newline) */
+\n                           { ECHO; yylineno++; }                             // print newline */
 <<EOF>>                      {
-                               if(!popfile()) {
+                               if(!pop()) {
                                  yyterminate();
                                }
                              }
@@ -37,7 +36,7 @@
                                { int c;
                         			   while((c = input()) && c != '\n') ;
                         			 }
-                        			 if(!newfile(yytext)) {
+                        			 if(!push(yytext)) {
                                  yyterminate(); /* no such file */
                                }
                         			 BEGIN INITIAL;
@@ -53,15 +52,14 @@ int main(int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
 
-  if (newfile(argv[1])) {
+  if (push(argv[1])) {
     yylex();
   }
 }
 
 // opens file, creates a new buffer and switches to it
-int newfile(char *filename) {
+int push(char *filename) {
   FILE *file = fopen(filename, "r");
-  bufstack *bs = malloc(sizeof(bufstack));
 
   /* die if no file or no room */
   if (!file) {
@@ -69,52 +67,52 @@ int newfile(char *filename) {
     return 0;
   }
 
-  if (!bs) {
+  bufstack *buf_stack = malloc(sizeof(bufstack));
+
+  if (!buf_stack) {
     perror("malloc");
     exit(EXIT_FAILURE);
   }
 
   /* remember state */
-  if (curBS) {
-    curBS->lineno = yylineno;
+  if (current_bufstack) {
+    current_bufstack->lineno = yylineno;
   }
-  bs->prev = curBS;
+  buf_stack->prev = current_bufstack;
 
   /* set up current entry */
-  bs->bs = yy_create_buffer(file, YY_BUF_SIZE);
-  bs->file = file;
-  bs->filename = filename;
-  yy_switch_to_buffer(bs->bs);
-  curBS = bs;
+  buf_stack->buf_state = yy_create_buffer(file, YY_BUF_SIZE);
+  buf_stack->file = file;
+  buf_stack->filename = filename;
+  yy_switch_to_buffer(buf_stack->buf_state);
+  current_bufstack = buf_stack;
   yylineno = 1;
-  curFilename = filename;
   return 1;
 }
 
 // goes back to previous buffer stack (if available)
-int popfile(void) {
-  bufstack *bs = curBS;
-  bufstack *prevbs;
+int pop(void) {
+  bufstack *buf_stack = current_bufstack;
+  bufstack *prev_bufstack;
 
-  if (!bs) {
+  if (!buf_stack) {
     return 0;
   }
 
   /* get rid of current entry */
-  fclose(bs->file);
-  yy_delete_buffer(bs->bs);
+  fclose(buf_stack->file);
+  yy_delete_buffer(buf_stack->buf_state);
 
   /* switch back to previous */
-  prevbs = bs->prev;
-  free(bs);
+  prev_bufstack= buf_stack->prev;
+  free(buf_stack);
 
-  if (!prevbs) {
+  if (!prev_bufstack) {
     return 0;
   }
 
-  yy_switch_to_buffer(prevbs->bs);
-  curBS = prevbs;
-  yylineno = curBS->lineno;
-  curFilename = curBS->filename;
+  yy_switch_to_buffer(prev_bufstack->buf_state);
+  current_bufstack = prev_bufstack;
+  yylineno = current_bufstack->lineno;
   return 1;
 }

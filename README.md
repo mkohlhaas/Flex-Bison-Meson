@@ -18,6 +18,7 @@ Original code at ftp://ftp.iecc.com/pub/file/flexbison.zip.
 - Each pattern in the Rules Section must start at the beginning of the line, since flex considers any line that starts with whitespace to be code to be copied into the generated C program.
 - In the declaration section, code inside of %{ and %} is copied through verbatim near the beginning of the generated C source file.
 - If action code returns, scanning resumes on the next call to yylex(); if it doesn't return, scanning resumes immediately (typically used for comments).
+- Each symbol in a bison rule has a value; the value of the target symbol (the one to the left of the colon) is called $$ in the action code, and the values on the right are numbered $1, $2, and so forth, up to the number of symbols in the rule. The values of tokens are whatever was in yylval when the scanner returned the token.
 - yyin
 - yyout
 - yylex() → The name that flex gives to the scanner (co-)routine.
@@ -25,13 +26,15 @@ Original code at ftp://ftp.iecc.com/pub/file/flexbison.zip.
 - yytext → In any `flex` action, the variable yytext is set to point to the input text that the pattern just matched.
 - yyleng → length of current token
 - yywrap() 〉[called when reached EOF, returns non-zero to indicate that no further files need process processing; obsolete] → use: %option noyywrap
+  - If you do not supply your own version of yywrap(), then you must either use %option noyywrap (in which case the scanner behaves as though yywrap() returned 1), or you must link with ‘-lfl’ to obtain the default version of the routine, which always returns 1.
 - void yyrestart(FILE \*new_file) → may be called to point yyin at a new input file
 - YY_BUFFER_STATE yy_create_buffer (FILE \*file, int size) → used for multiple input files
 - yylval 〉The token's value. The yylval global variable is used to pass the semantic value associated with a token from the lexer to the parser.
-- yyerror() → There is a default implementation provided by the library, but you can write your own.
+- yyerror() → There is a default implementation provided by the library (liby.a), but you can write your own.
   - default implementation: int yyerror (char const \*);
 - yylineno: flex provides this global variable for tracking line numbers. You are responsible for its management.
 - %option nodefault → no default rule for unmatched input (recommended!)
+  - %option nodefault at the top of the scanner to tell it not to add a default rule (. ECHO;)
 - %s or %x (start conditions; inclusive/exclusive): inclusive → rules with no start conditions at all will also be active
   - In effect, the state defines a different scanner, with its own rules.
   - flex always defines INITIAL state

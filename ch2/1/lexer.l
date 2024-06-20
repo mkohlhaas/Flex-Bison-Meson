@@ -25,5 +25,3 @@ int main(int argc, char **argv) {
   yylex();
   printf("lines: %d, words: %d, chars: %d\n", lines, words, chars);
 }
-
-int yywrap() { return 1; }

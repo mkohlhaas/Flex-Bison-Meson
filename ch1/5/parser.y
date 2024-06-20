@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 int yylex(void);
-void yyerror(char* s);
+void yyerror(char* s); // uses the default implementation in liby.a
 
 %}
 
@@ -40,9 +40,4 @@ int main(void)
 {
   printf("> ");
   yyparse();
-}
-
-void yyerror(char *s)
-{
-  fprintf(stderr, "error: %s\n", s);
 }

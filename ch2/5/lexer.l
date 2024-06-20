@@ -19,14 +19,14 @@ ILEN    ([Uu](L|l|LL|ll)?|(L|l|LL|ll)[Uu]?)
 %{
 typedef struct { /* a variable name */
   struct ref *reflist;
-  char *name;
+  char       *name;
 } symbol;
 
 typedef struct ref {
   struct ref *next;
-  char *filename;
-  int flags; /* 01 - definition */
-  int lineno;
+  char       *filename;
+  int         flags; /* 01 - definition */
+  int         lineno;
 } ref;
 
 /* simple symtab of fixed size */
@@ -34,25 +34,24 @@ typedef struct ref {
 symbol symtab[NHASH];
 
 symbol *lookup(char *);
-void addref(int, char *, char *, int);
+void    addref(int, char *, char *, int);
 
 char *curfilename; /* name of current input file */
-
-int defining; /* names are probably definitions */
+int   defining;    /* names are probably definitions */
 
 /* include file stack */
 typedef struct bufstack {
-  struct bufstack *prev; /* previous entry */
-  YY_BUFFER_STATE bs;    /* saved buffer */
-  int lineno;            /* saved line number in this file */
-  char *filename;        /* name of this file */
-  FILE *f;               /* current file */
+  struct bufstack *prev;       /* previous entry */
+  YY_BUFFER_STATE  bs;         /* saved buffer */
+  int              lineno;     /* saved line number in this file */
+  char            *filename;   /* name of this file */
+  FILE            *file;       /* current file */
 } bufstack;
 
 bufstack *curbs;
 
-int newfile(char *fn);
-int popfile(void);
+int push(char *filename);
+int pop(void);
 %}
 
 %%
@@ -60,7 +59,7 @@ int popfile(void);
  /* ignore comments */
 "/*"                    { BEGIN(COMMENT) ; }
 <COMMENT>"*/"           { BEGIN(INITIAL); }
-<COMMENT>([^*]|\en)+|.
+<COMMENT>([^*]|\n)+|.
 
  /* C++ comment, a common extension */
 "//".*\n
@@ -161,7 +160,7 @@ L?\"([^\"\\]|\\['"?\\abfnrtv]|\\[0-7]{1,3}|\\[Xx][0-9a-fA-F]+|{UCN})+\"
 <IFILE>[^>\"]+  {
                   int c;
 			            while((c = input()) && c != '\n');
-		              newfile(strdup(yytext));
+		              push(strdup(yytext));
 		              BEGIN INITIAL;
                 }
 
@@ -171,7 +170,7 @@ L?\"([^\"\\]|\\['"?\\abfnrtv]|\\[0-7]{1,3}|\\[Xx][0-9a-fA-F]+|{UCN})+\"
                 }
 
 <<EOF>>         {
-                  if(!popfile()) {
+                  if(!pop()) {
                     yyterminate();
                   }
                 }
@@ -186,7 +185,7 @@ static unsigned symhash(char *sym) {
   unsigned int hash = 0;
   unsigned c;
 
-  while (c = *sym++)
+  while ((c = *sym++))
     hash = hash * 9 ^ c;
 
   return hash;
@@ -297,7 +296,7 @@ int main(int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
   for (int i = 1; i < argc; i++) {
-    if (newfile(argv[i]))
+    if (push(argv[i]))
       yylex();
   }
 
@@ -305,13 +304,13 @@ int main(int argc, char **argv) {
 }
 
 /* nested input files */
-int newfile(char *fn) {
-  FILE *f = fopen(fn, "r");
+int push(char *filename) {
+  FILE *file = fopen(filename, "r");
   struct bufstack *bs;
 
   /* check if no file */
-  if (!f) {
-    perror(fn);
+  if (!file) {
+    perror(filename);
     return 0;
   }
 
@@ -326,19 +325,19 @@ int newfile(char *fn) {
     curbs->lineno = yylineno;
 
   bs->prev = curbs;
-  bs->f = f;
-  bs->filename = fn;
+  bs->file = file;
+  bs->filename = filename;
 
   /* set up current entry */
-  bs->bs = yy_create_buffer(f, YY_BUF_SIZE);
+  bs->bs = yy_create_buffer(file, YY_BUF_SIZE);
   yy_switch_to_buffer(bs->bs);
   curbs = bs;
   yylineno = 1;
-  curfilename = fn;
+  curfilename = filename;
   return 1;
 }
 
-int popfile(void) {
+int pop(void) {
   struct bufstack *bs = curbs;
   struct bufstack *prevbs;
 
@@ -348,6 +347,7 @@ int popfile(void) {
   /* get rid of current entry
   fclose(bs->f);
   yy_delete_buffer(bs->bs);
+  */
 
   /* switch back to previous */
   prevbs = bs->prev;

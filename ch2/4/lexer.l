@@ -10,13 +10,13 @@
   // 'reference' implemented as linked list.
   typedef struct ref {
     struct ref *next;
-    char *filename;
-    int lineno;
+    char       *filename;
+    int         lineno;
   } ref;
 
-  // 'symbol' → a word and its references
+  // 'symbol' = a word and its references
   typedef struct {
-    char *word;
+    char       *word;
     struct ref *reflist;
   } symbol;
 
@@ -25,10 +25,10 @@
   #define NHASH 9997
   symbol symtab[NHASH] = {0};
 
-  symbol *lookup(char*);
-  void addref(int, char*, char*);
+  char   *curfilename;		/* name of current input file */
 
-  char *curfilename;		/* name of current input file */
+  symbol *lookup(char*);
+  void    addref(int, char*, char*);
 %}
 
 %%
@@ -105,7 +105,7 @@ y      |
 yet    |
 you    |
 your   |
-yours
+yours             /* just skip me */
 
 [a-z]+(\'(s|t))?  { addref(yylineno, curfilename, yytext); }
 .|\n              /* ignore everything else */
@@ -143,16 +143,16 @@ symbol *lookup(char *word) {
     if (!sp->word) {
       nnew++;
       sp->word = strdup(word); // making a copy of yytext!!!
-      sp->reflist = 0;
+      sp->reflist = NULL;
       return sp;
     }
 
     // hashing with linear probing
     if (++sp >= symtab + NHASH)
-      sp = symtab; /* try the next entry */
+      sp = symtab; /* wrap around */
   }
   fputs("symbol table overflow\n", stderr);
-  abort(); /* tried them all, table is full */
+  exit(EXIT_FAILURE); /* tried them all, table is full */
 }
 
 void addref(int lineno, char *filename, char *word) {
@@ -164,7 +164,7 @@ void addref(int lineno, char *filename, char *word) {
     return;
   }
 
-  ref *ref = malloc(sizeof(ref));
+  ref *ref = malloc(sizeof(*ref));
   if (!ref) {
     perror("out of memory\n");
     exit(EXIT_FAILURE);
@@ -226,7 +226,7 @@ void printrefs() {
       if (rp->filename == prevfn) {
         printf(" %d", rp->lineno);
       } else {
-        printf(" %s:%d", rp->filename, rp->lineno);
+        printf(" %s: %d", rp->filename, rp->lineno);
         prevfn = rp->filename;
       }
     }
@@ -239,7 +239,7 @@ int main(int argc, char **argv) {
     curfilename = "(stdin)";
     yylineno = 1;
     yylex();
-  } else
+  } else {
     for (int i = 1; i < argc; i++) {
       FILE *file = fopen(argv[i], "r");
 
@@ -254,6 +254,7 @@ int main(int argc, char **argv) {
       yylex();
       fclose(file);
     }
+  }
 
   printf("old = %d, new = %d, total = %d, probes = %d, avg = %1.2f\n", nold, nnew, nold + nnew, nprobe, (float)nprobe / (nold + nnew));
 
