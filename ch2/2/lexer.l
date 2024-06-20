@@ -12,7 +12,7 @@ int lines_total = 0;
 
 %%
 
-[^ \t\n\r\f\v]+ { words++; chars += strlen(yytext); }
+[^ \t\n\r\f\v]+ { words++; chars += yyleng; }
 \n              { chars++; lines++; }
 .               { chars++; }
 
