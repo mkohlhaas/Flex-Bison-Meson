@@ -6,24 +6,24 @@ int yylex();
 %}
 
 %union {
-  ast *a;
-  double d;
-  symbol *s;
+  ast     *a;
+  double   d;
+  symbol  *s;
   symlist *sl;
-  int fn;
+  int      fn;
 }
 
 /* declare types/tokens */
 %type  <a>  exp stmt list explist
 %token <d>  NUMBER
-%token <s>  NAME /* Whenever you see NAME it meams it will return a pointer into the symbol table (→ symbol *). The lexer calls lookup(). */
+%token <s>  NAME /* Whenever you see NAME it means it will return a pointer into the symbol table (→ symbol *). The lexer calls lookup(). */
 %type  <sl> symlist
 %token <fn> FUNC
 %token      EOL
 
 %token IF THEN ELSE WHILE DO LET
 
-/* associativity and precedence */
+/* associativity and precedence (from lowest to highest) */
 %nonassoc <fn> CMP
 %right '='
 %left  '+' '-'
@@ -69,8 +69,6 @@ explist: exp
        | exp ',' explist                            { $$ = newast('L', $1, $3); }
        ;
 
-/* symbol list for function arguments; they shouldn't actually use the symbol table → bug */
-/* suggestion: use PARAMNAME as token and separate lexer rule for it without using the global symbol table */
 symlist: NAME                                       { $$ = newsymlist($1, NULL); }
        | NAME ',' symlist                           { $$ = newsymlist($1, $3); }
        ;
@@ -81,6 +79,7 @@ calclist: /* nothing - empty list */
                                                       printf("⇒ %.4g\n» ", eval($2));
                                                       treefree($2);
                                                     }
+
   | calclist LET NAME '(' symlist ')' '=' list EOL  {
                                                       defFn($3, $5, $8);
                                                       printf("defined %s\n= ", $3->name);

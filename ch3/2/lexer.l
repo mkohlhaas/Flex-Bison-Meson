@@ -1,4 +1,5 @@
 %option noyywrap nodefault yylineno
+
 %{
 # include "aux.h"
 # include "parser.h"
@@ -52,10 +53,10 @@ print                        { yylval.fn = B_print; return FUNC; }
 [0-9]+"."[0-9]*{EXP}? |
 "."?[0-9]+{EXP}?             { yylval.d = atof(yytext); return NUMBER; }
 
-"//".*
+"//".*                       /* ignore comment */
 [ \t]                        /* ignore white space */
 \\\n                         printf("c> "); /* ignore line continuation */
 "\n"                         { return EOL; }
-.	                           { yyerror("Mystery character %c\n", *yytext); }
+.                            { yyerror("Mystery character %c\n", *yytext); }
 
 %%

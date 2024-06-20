@@ -1,6 +1,11 @@
 ### Project ####################################################################
 
-project('5', 'c', version: '0.1', default_options: ['warning_level=3'])
+project(
+  '1',
+  'c',
+  version: '0.1',
+  default_options: ['c_std = c23', 'warning_level=3'],
+)
 
 ### Flex #######################################################################
 
@@ -37,7 +42,7 @@ parser_src = custom_target(
 
 executable(
   'calc',
-  [scanner_src, parser_src],
+  [scanner_src, parser_src, 'aux.c'],
   dependencies: [flex_lib, bison_lib],
   install: false,
 )

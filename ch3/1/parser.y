@@ -30,13 +30,13 @@ calclist: /* nothing */
  ;
 
 exp: factor
- | exp '+' factor { $$ = newast('+', $1,$3); }
- | exp '-' factor { $$ = newast('-', $1,$3);}
+ | exp '+' factor { $$ = newast('+', $1, $3); }
+ | exp '-' factor { $$ = newast('-', $1, $3);}
  ;
 
 factor: term
- | factor '*' term { $$ = newast('*', $1,$3); }
- | factor '/' term { $$ = newast('/', $1,$3); }
+ | factor '*' term { $$ = newast('*', $1, $3); }
+ | factor '/' term { $$ = newast('/', $1, $3); }
  ;
 
 term: NUMBER       { $$ = newnum($1); }

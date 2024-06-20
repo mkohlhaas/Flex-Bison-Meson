@@ -1,6 +1,11 @@
 ### Project ####################################################################
 
-project('5', 'c', version: '0.1', default_options: ['warning_level=3'])
+project(
+  '2',
+  'c',
+  version: '0.1',
+  default_options: ['c_std = c23', 'warning_level=3'],
+)
 
 ### Flex #######################################################################
 
@@ -33,11 +38,15 @@ parser_src = custom_target(
   output: [parser_h, parser_c],
 )
 
+### Math #######################################################################
+
+m_lib = cc.find_library('m', required: true)
+
 ### Binary #####################################################################
 
 executable(
   'calc',
-  [scanner_src, parser_src],
-  dependencies: [flex_lib, bison_lib],
+  [scanner_src, parser_src, 'aux.c'],
+  dependencies: [flex_lib, bison_lib, m_lib],
   install: false,
 )
